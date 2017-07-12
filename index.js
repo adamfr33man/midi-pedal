@@ -3,7 +3,7 @@ const logger = require('winston-color'),
   SerialPort = require('serialport'),
   ByteLength = SerialPort.parsers.ByteLength;
 
-var port = new SerialPort('COM5', {
+var port = new SerialPort('COM3', {
   baudRate: 115200,
   autoOpen: false
 });
@@ -26,7 +26,7 @@ port.open(function(err) {
 port.on('open', function() {
   // open logic
   port.on('data', function(data) {
-    // logger.log('info', `Data: ${data}`);
+    logger.log('info', `Data: [${parseInt(data[0])}, ${parseInt(data[1])}, ${parseInt(data[2])}]`);
     output.sendMessage([data[0], data[1], data[2]]);
   });
 });
@@ -43,7 +43,7 @@ for (let i = 0; i < output.getPortCount(); i++) {
 }
 
 // Open the first available output port.
-output.openPort(1);
+output.openPort(3);
 
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
@@ -61,3 +61,28 @@ function done() {
   output.closePort();
   process.exit();
 }
+
+
+
+var input = new midi.input();
+
+// Count the available output ports.
+logger.log('info', `Got: ${input.getPortCount()} port(s)`);
+
+// Get the name of a specified output port.
+for (let i = 0; i < input.getPortCount(); i++) {
+  logger.log('info', `Port # ${i} is named ${input.getPortName(i)}`);
+}
+
+input.on('message', function(deltaTime, message) {
+  // The message is an array of numbers corresponding to the MIDI bytes:
+  //   [status, data1, data2]
+  // https://www.cs.cf.ac.uk/Dave/Multimedia/node158.html has some helpful
+  // information interpreting the messages.
+  logger.log('info', 'm:[' + message + ']');
+});
+
+// Open the first available input port.
+input.openPort(0);
+
+input.ignoreTypes(false, false, false);

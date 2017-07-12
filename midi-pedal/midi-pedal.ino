@@ -22,12 +22,51 @@
 
  */
 
+#define SWITCH_A 8
+#define SWITCH_B 9
+#define SWITCH_C 10
+#define SWITCH_D 11
+
+boolean switchA = false;
+boolean switchB = false;
+boolean switchC = false;
+boolean switchD = false;
+
 void setup() {
   //  Set MIDI baud rate:
   Serial.begin(115200);
+
+  // Setup inputs
+  pinMode(SWITCH_A, INPUT);
+  pinMode(SWITCH_B, INPUT);
+  pinMode(SWITCH_C, INPUT);
+  pinMode(SWITCH_D, INPUT);
+}
+
+void checkButton(int switchPin, boolean &switchState) {
+  boolean newVal = digitalRead(switchPin);
+
+  if (newVal != switchState) {
+    if(newVal) {
+      noteOn(153, (0x40 + switchPin), newVal ? 0x80 : 0x00);
+    } else {
+      noteOn(137, (0x40 + switchPin), newVal ? 0x80 : 0x00);
+    }
+    switchState = newVal;
+  }
 }
 
 void loop() {
+  //playScale();
+  checkButton(SWITCH_A, switchA);
+  checkButton(SWITCH_B, switchB);
+  checkButton(SWITCH_C, switchC);
+  checkButton(SWITCH_D, switchD);
+
+  delay(50);
+}
+
+void playScale() {
   // play notes from F#-0 (0x1E) to F#-5 (0x5A):
   for (int note = 0x1E; note < 0x5A; note ++) {
     //Note on channel 1 (0x90), some note value (note), middle velocity (0x45):
