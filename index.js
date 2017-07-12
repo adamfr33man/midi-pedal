@@ -3,7 +3,7 @@ const logger = require('winston-color'),
   SerialPort = require('serialport'),
   ByteLength = SerialPort.parsers.ByteLength;
 
-var port = new SerialPort('COM4', {
+var port = new SerialPort('COM5', {
   baudRate: 115200,
   autoOpen: false
 });
@@ -43,7 +43,7 @@ for (let i = 0; i < output.getPortCount(); i++) {
 }
 
 // Open the first available output port.
-output.openPort(0);
+output.openPort(1);
 
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
