@@ -10,15 +10,31 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-#define SWITCH_A 8
-#define SWITCH_B 9
-#define SWITCH_C 10
-#define SWITCH_D 11
+#define SWITCH_A 4
+#define SWITCH_B 5
+#define SWITCH_C 6
+#define SWITCH_D 7
+
+#define SWITCH_E 8
+#define SWITCH_F 9
+#define SWITCH_G 10
+#define SWITCH_H 14
+
+#define SWITCH_I 15
+#define SWITCH_J 16
 
 boolean switchA = false;
 boolean switchB = false;
 boolean switchC = false;
 boolean switchD = false;
+
+boolean switchE = false;
+boolean switchF = false;
+boolean switchG = false;
+boolean switchH = false;
+
+boolean switchI = false;
+boolean switchJ = false;
 
 LiquidCrystal_I2C lcd(0x3F, 16, 2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
@@ -37,10 +53,17 @@ void setup() {
   pinMode(SWITCH_C, INPUT);
   pinMode(SWITCH_D, INPUT);
 
+  pinMode(SWITCH_E, INPUT);
+  pinMode(SWITCH_F, INPUT);
+  pinMode(SWITCH_G, INPUT);
+  pinMode(SWITCH_H, INPUT);
+
+  pinMode(SWITCH_I, INPUT);
+  pinMode(SWITCH_J, INPUT);
+
   lcd.print("Midi Pedal is");
   lcd.setCursor(0, 1);
-  lcd.print("Ready for action now !");
-
+//  lcd.print("Ready for action now !");
 }
 
 void checkButton(int switchPin, boolean &switchState) {
@@ -57,11 +80,40 @@ void checkButton(int switchPin, boolean &switchState) {
 }
 
 void loop() {
+
   //playScale();
   checkButton(SWITCH_A, switchA);
+  lcd.setCursor(0, 1);
+  lcd.print(switchA ? "1" : "0");
   checkButton(SWITCH_B, switchB);
+  lcd.setCursor(1, 1);
+  lcd.print(switchB ? "1" : "0");
   checkButton(SWITCH_C, switchC);
+  lcd.setCursor(2, 1);
+  lcd.print(switchC ? "1" : "0");
   checkButton(SWITCH_D, switchD);
+  lcd.setCursor(3, 1);
+  lcd.print(switchD ? "1" : "0");
+
+  checkButton(SWITCH_E, switchE);
+  lcd.setCursor(4, 1);
+  lcd.print(switchE ? "1" : "0");
+  checkButton(SWITCH_F, switchF);
+  lcd.setCursor(5, 1);
+  lcd.print(switchF ? "1" : "0");
+  checkButton(SWITCH_G, switchG);
+  lcd.setCursor(6, 1);
+  lcd.print(switchG ? "1" : "0");
+  checkButton(SWITCH_H, switchH);
+  lcd.setCursor(7, 1);
+  lcd.print(switchH ? "1" : "0");
+
+  checkButton(SWITCH_I, switchI);
+  lcd.setCursor(8, 1);
+  lcd.print(switchI ? "1" : "0");
+  checkButton(SWITCH_J, switchJ);
+  lcd.setCursor(9, 1);
+  lcd.print(switchJ ? "1" : "0");
 
   delay(50);
 }
@@ -81,8 +133,11 @@ void playScale() {
 //  plays a MIDI note.  Doesn't check to see that
 //  cmd is greater than 127, or that data values are  less than 127:
 void noteOn(int cmd, int pitch, int velocity) {
-  Serial.write(cmd);
+//  Serial.write(cmd);
+//  Serial.write(pitch);
+//  Serial.write(velocity);
   Serial.write(pitch);
-  Serial.write(velocity);
+  Serial.write(": ");
+  Serial.write(velocity > 10 ? "On" : "Off");
+  Serial.write("\n");
 }
-
