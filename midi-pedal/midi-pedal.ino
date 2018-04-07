@@ -10,18 +10,18 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-#define SWITCH_A 4
-#define SWITCH_B 5
-#define SWITCH_C 6
-#define SWITCH_D 7
+#define SWITCH_A 16
+#define SWITCH_B 15
+#define SWITCH_C 14
+#define SWITCH_D 4
 
-#define SWITCH_E 8
+#define SWITCH_E 10
 #define SWITCH_F 9
-#define SWITCH_G 10
-#define SWITCH_H 14
+#define SWITCH_G 8
+#define SWITCH_H 7
 
-#define SWITCH_I 15
-#define SWITCH_J 16
+#define SWITCH_I 6
+#define SWITCH_J 5
 
 boolean switchA = false;
 boolean switchB = false;
