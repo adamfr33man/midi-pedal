@@ -1,26 +1,14 @@
 /*
- MIDI note player
+  This has an I2C LCD and a bunch of switches
 
- This sketch shows how to use the serial transmit pin (pin 1) to send MIDI note data.
- If this circuit is connected to a MIDI synth, it will play
- the notes F#-0 (0x1E) to F#-5 (0x5A) in sequence.
-
-
- The circuit:
- * digital in 1 connected to MIDI jack pin 5
- * MIDI jack pin 2 connected to ground
- * MIDI jack pin 4 connected to +5V through 220-ohm resistor
- Attach a MIDI cable to the jack, then to a MIDI synth, and play music.
-
- created 13 Jun 2006
- modified 13 Aug 2012
- by Tom Igoe
-
- This example code is in the public domain.
-
- http://www.arduino.cc/en/Tutorial/Midi
+  Wiring
+  ------
+  4 - LCD SDA
+  5 - LCD SCL
 
  */
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
 #define SWITCH_A 8
 #define SWITCH_B 9
@@ -32,15 +20,27 @@ boolean switchB = false;
 boolean switchC = false;
 boolean switchD = false;
 
+LiquidCrystal_I2C lcd(0x3F, 16, 2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
 void setup() {
   //  Set MIDI baud rate:
   Serial.begin(115200);
+
+  // Initialize the LCD
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
 
   // Setup inputs
   pinMode(SWITCH_A, INPUT);
   pinMode(SWITCH_B, INPUT);
   pinMode(SWITCH_C, INPUT);
   pinMode(SWITCH_D, INPUT);
+
+  lcd.print("Midi Pedal is");
+  lcd.setCursor(0, 1);
+  lcd.print("Ready for action now !");
+
 }
 
 void checkButton(int switchPin, boolean &switchState) {
