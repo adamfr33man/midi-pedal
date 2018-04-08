@@ -9,6 +9,7 @@
  */
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include "MIDIUSB.h"
 
 #define SWITCH_A 16
 #define SWITCH_B 15
@@ -70,18 +71,17 @@ void checkButton(int switchPin, boolean &switchState) {
   boolean newVal = digitalRead(switchPin);
 
   if (newVal != switchState) {
-    if(newVal) {
-      noteOn(153, (0x40 + switchPin), newVal ? 0x80 : 0x00);
-    } else {
-      noteOn(137, (0x40 + switchPin), newVal ? 0x80 : 0x00);
-    }
+      noteOn(153, (0x40 + switchPin), 0x80);
+//    if(newVal) {
+//      noteOn(153, (0x40 + switchPin), newVal ? 0x80 : 0x00);
+//    } else {
+//      noteOn(137, (0x40 + switchPin), newVal ? 0x80 : 0x00);
+//    }
     switchState = newVal;
   }
 }
 
 void loop() {
-
-  //playScale();
   checkButton(SWITCH_A, switchA);
   lcd.setCursor(0, 1);
   lcd.print(switchA ? "1" : "0");
@@ -115,29 +115,15 @@ void loop() {
   lcd.setCursor(9, 1);
   lcd.print(switchJ ? "1" : "0");
 
+  MidiUSB.flush();
   delay(50);
 }
 
-void playScale() {
-  // play notes from F#-0 (0x1E) to F#-5 (0x5A):
-  for (int note = 0x1E; note < 0x5A; note ++) {
-    //Note on channel 1 (0x90), some note value (note), middle velocity (0x45):
-    noteOn(0x90, note, 0x45);
-    delay(100);
-    //Note on channel 1 (0x90), some note value (note), silent velocity (0x00):
-    noteOn(0x90, note, 0x00);
-    delay(100);
-  }
-}
-
-//  plays a MIDI note.  Doesn't check to see that
-//  cmd is greater than 127, or that data values are  less than 127:
-void noteOn(int cmd, int pitch, int velocity) {
-//  Serial.write(cmd);
-//  Serial.write(pitch);
-//  Serial.write(velocity);
+void noteOn(uint8_t cmd, uint8_t pitch, uint8_t velocity) {
   Serial.write(pitch);
   Serial.write(": ");
   Serial.write(velocity > 10 ? "On" : "Off");
   Serial.write("\n");
+  midiEventPacket_t noteOn = {0x09, 0x80 | cmd, pitch, velocity};
+  MidiUSB.sendMIDI(noteOn);
 }
