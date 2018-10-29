@@ -11,18 +11,19 @@
 #include <LiquidCrystal_I2C.h>
 #include "MIDIUSB.h"
 
-#define SWITCH_A 16
-#define SWITCH_B 15
-#define SWITCH_C 14
-#define SWITCH_D 4
+#define SWITCH_A 10
+#define SWITCH_B 9
+#define SWITCH_C 8
+#define SWITCH_D 7
 
-#define SWITCH_E 10
-#define SWITCH_F 9
-#define SWITCH_G 8
-#define SWITCH_H 7
+#define SWITCH_E 6
+#define SWITCH_F 5
 
-#define SWITCH_I 6
-#define SWITCH_J 5
+#define SWITCH_G 16
+#define SWITCH_H 15
+#define SWITCH_I 14
+#define SWITCH_J 4
+
 
 boolean switchA = false;
 boolean switchB = false;
@@ -36,6 +37,8 @@ boolean switchH = false;
 
 boolean switchI = false;
 boolean switchJ = false;
+
+boolean cc_mode = true;
 
 LiquidCrystal_I2C lcd(0x3F, 16, 2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
@@ -71,7 +74,7 @@ void checkButton(int switchPin, boolean &switchState) {
   boolean newVal = digitalRead(switchPin);
 
   if (newVal != switchState) {
-      noteOn(153, (0x40 + switchPin), 0x80);
+      noteOn(153, switchToNote(switchPin), 0x80);
 //    if(newVal) {
 //      noteOn(153, (0x40 + switchPin), newVal ? 0x80 : 0x00);
 //    } else {
@@ -119,11 +122,61 @@ void loop() {
   delay(50);
 }
 
+uint8_t switchToNote(int switchPin) {
+  switch(switchPin) {
+    case SWITCH_A:
+      return 0;
+    break;
+
+    case SWITCH_B:
+      return 1;
+    break;
+    
+    case SWITCH_C:
+      return 2;
+    break;
+    
+    case SWITCH_D:
+      return 3;
+    break;
+
+    case SWITCH_E:
+      return 8;
+    break;
+
+    case SWITCH_F:
+      return 9;
+    break;
+
+    case SWITCH_G:
+      return 4;
+    break;
+
+    case SWITCH_H:
+      return 5;
+    break;
+
+    case SWITCH_I:
+      return 6;
+    break;
+
+    case SWITCH_J:
+      return 7;
+    break;
+    
+  }
+}
+ 
 void noteOn(uint8_t cmd, uint8_t pitch, uint8_t velocity) {
   Serial.write(pitch);
   Serial.write(": ");
   Serial.write(velocity > 10 ? "On" : "Off");
   Serial.write("\n");
-  midiEventPacket_t noteOn = {0x09, 0x80 | cmd, pitch, velocity};
+  midiEventPacket_t noteOn;
+  if(cc_mode) {
+    noteOn = {0x0B, 0xB0 | cmd, 0x45, pitch};        
+  } else {
+    noteOn = {0x09, 0x80 | cmd, 0x40 + pitch, velocity};
+  }
   MidiUSB.sendMIDI(noteOn);
 }
