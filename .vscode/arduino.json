@@ -1,0 +1,4 @@
+{
+    "board": "arduino:avr:micro",
+    "sketch": "midi-pedal\\midi-pedal.ino"
+}
