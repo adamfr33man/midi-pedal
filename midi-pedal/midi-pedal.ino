@@ -6,6 +6,26 @@
   4 - LCD SDA
   5 - LCD SCL
 
+  Top Row switches
+  10 - A
+  9  - B
+  8  - C
+  7  - D
+
+  Middle switches
+  6  - E
+  5  - F
+
+  Bottom switches
+  16 - G
+  15 - H
+  14 - I
+  4  - J
+
+  Volume Pedal
+  18 - Switch Down
+  19 - Switch Up
+  20 - Volume
  */
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
@@ -24,23 +44,32 @@
 #define SWITCH_I 14
 #define SWITCH_J 4
 
+#define SWITCH_DOWN 18
+#define SWITCH_UP   19
+
+#define VOLUME_PEDAL 20
 
 boolean switchA = false;
 boolean switchB = false;
 boolean switchC = false;
 boolean switchD = false;
 
+boolean switchI = false;
+boolean switchJ = false;
+
 boolean switchE = false;
 boolean switchF = false;
 boolean switchG = false;
 boolean switchH = false;
 
-boolean switchI = false;
-boolean switchJ = false;
+boolean switchDown = false;
+boolean switchUp = false;
 
 boolean cc_mode = true;
 
 LiquidCrystal_I2C lcd(0x3F, 16, 2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
+int midiMap[] = {0x0B, 0xB0, 0x45, 0x00};
 
 void setup() {
   //  Set MIDI baud rate:
@@ -57,17 +86,23 @@ void setup() {
   pinMode(SWITCH_C, INPUT);
   pinMode(SWITCH_D, INPUT);
 
+  pinMode(SWITCH_I, INPUT);
+  pinMode(SWITCH_J, INPUT);
+
   pinMode(SWITCH_E, INPUT);
   pinMode(SWITCH_F, INPUT);
   pinMode(SWITCH_G, INPUT);
   pinMode(SWITCH_H, INPUT);
 
-  pinMode(SWITCH_I, INPUT);
-  pinMode(SWITCH_J, INPUT);
+  pinMode(SWITCH_DOWN, INPUT);
+  pinMode(SWITCH_UP, INPUT);
+
+  pinMode(VOLUME_PEDAL, INPUT);
 
   lcd.print("Midi Pedal is");
   lcd.setCursor(0, 1);
 //  lcd.print("Ready for action now !");
+  Serial.write("EEPROM length is: ", EEPROM.length());
 }
 
 void checkButton(int switchPin, boolean &switchState) {
@@ -98,6 +133,13 @@ void loop() {
   lcd.setCursor(3, 1);
   lcd.print(switchD ? "1" : "0");
 
+  checkButton(SWITCH_I, switchI);
+  lcd.setCursor(8, 1);
+  lcd.print(switchI ? "1" : "0");
+  checkButton(SWITCH_J, switchJ);
+  lcd.setCursor(9, 1);
+  lcd.print(switchJ ? "1" : "0");
+
   checkButton(SWITCH_E, switchE);
   lcd.setCursor(4, 1);
   lcd.print(switchE ? "1" : "0");
@@ -111,12 +153,14 @@ void loop() {
   lcd.setCursor(7, 1);
   lcd.print(switchH ? "1" : "0");
 
-  checkButton(SWITCH_I, switchI);
-  lcd.setCursor(8, 1);
-  lcd.print(switchI ? "1" : "0");
-  checkButton(SWITCH_J, switchJ);
-  lcd.setCursor(9, 1);
-  lcd.print(switchJ ? "1" : "0");
+  checkButton(SWITCH_DOWN, switchDown);
+  // lcd.setCursor(8, 1);
+  lcd.print(switchDown ? "1" : "0");
+  checkButton(SWITCH_UP, switchUp);
+  // lcd.setCursor(9, 1);
+  lcd.print(switchUp ? "1" : "0");
+
+  readVolume();
 
   MidiUSB.flush();
   delay(50);
@@ -179,4 +223,9 @@ void noteOn(uint8_t cmd, uint8_t pitch, uint8_t velocity) {
     noteOn = {0x09, 0x80 | cmd, 0x40 + pitch, velocity};
   }
   MidiUSB.sendMIDI(noteOn);
+}
+
+void readVolume() {
+  uint8_t volume;
+  volume = analogRead(VOLUME_PEDAL);
 }
