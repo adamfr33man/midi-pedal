@@ -101,20 +101,14 @@ void setup() {
 
   lcd.print("Midi Pedal is");
   lcd.setCursor(0, 1);
-//  lcd.print("Ready for action now !");
-  Serial.write("EEPROM length is: ", EEPROM.length());
+//  Serial.write("EEPROM length is: ", EEPROM.length());
 }
 
 void checkButton(int switchPin, boolean &switchState) {
   boolean newVal = digitalRead(switchPin);
 
   if (newVal != switchState) {
-      noteOn(153, switchToNote(switchPin), 0x80);
-//    if(newVal) {
-//      noteOn(153, (0x40 + switchPin), newVal ? 0x80 : 0x00);
-//    } else {
-//      noteOn(137, (0x40 + switchPin), newVal ? 0x80 : 0x00);
-//    }
+    noteOn(153, switchToNote(switchPin), 0x80);
     switchState = newVal;
   }
 }
@@ -154,10 +148,10 @@ void loop() {
   lcd.print(switchH ? "1" : "0");
 
   checkButton(SWITCH_DOWN, switchDown);
-  // lcd.setCursor(8, 1);
+  lcd.setCursor(8, 1);
   lcd.print(switchDown ? "1" : "0");
   checkButton(SWITCH_UP, switchUp);
-  // lcd.setCursor(9, 1);
+  lcd.setCursor(9, 1);
   lcd.print(switchUp ? "1" : "0");
 
   readVolume();
