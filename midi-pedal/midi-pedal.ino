@@ -28,50 +28,47 @@
   20 - Volume
  */
 #include <Wire.h>
+#include <EEPROM.h>
 #include <LiquidCrystal_I2C.h>
 #include "MIDIUSB.h"
 
-#define SWITCH_A 10
-#define SWITCH_B 9
-#define SWITCH_C 8
-#define SWITCH_D 7
-
-#define SWITCH_E 6
-#define SWITCH_F 5
-
-#define SWITCH_G 16
-#define SWITCH_H 15
-#define SWITCH_I 14
-#define SWITCH_J 4
-
-#define SWITCH_DOWN 18
-#define SWITCH_UP   19
-
 #define VOLUME_PEDAL 20
+#define BOOT_COUNT 0
+#define MIDI_MAP_START 16
 
-boolean switchA = false;
-boolean switchB = false;
-boolean switchC = false;
-boolean switchD = false;
+byte boot_count;
+int switches[] = {10, 9, 8, 7, 6, 5, 16, 15, 14, 4, 18, 19};
 
-boolean switchI = false;
-boolean switchJ = false;
+boolean switchState[sizeof(switches)];
 
-boolean switchE = false;
-boolean switchF = false;
-boolean switchG = false;
-boolean switchH = false;
+typedef struct {
+  uint8_t cmd;
+  uint8_t channel;
+  uint8_t pitch;
+  uint8_t velocity;
+} midi_packet;
 
-boolean switchDown = false;
-boolean switchUp = false;
+#define PACKET_SIZE sizeof(midi_packet)
 
-boolean cc_mode = true;
+midi_packet midiValues[] = {
+  {0x0B, 0xB0 | 0x99, 0x45, 0x00},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x01},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x02},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x03},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x08},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x09},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x04},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x05},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x06},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x07},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x0A},
+  {0x0B, 0xB0 | 0x99, 0x45, 0x0B}
+};
 
-LiquidCrystal_I2C lcd(0x3F, 16, 2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
-
-int midiMap[] = {0x0B, 0xB0, 0x45, 0x00};
+LiquidCrystal_I2C lcd(0x3F, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 void setup() {
+  boot_count = EEPROM.read(BOOT_COUNT);
   //  Set MIDI baud rate:
   Serial.begin(115200);
 
@@ -80,79 +77,46 @@ void setup() {
   lcd.backlight();
   lcd.clear();
 
+  delay(250);
+
   // Setup inputs
-  pinMode(SWITCH_A, INPUT);
-  pinMode(SWITCH_B, INPUT);
-  pinMode(SWITCH_C, INPUT);
-  pinMode(SWITCH_D, INPUT);
-
-  pinMode(SWITCH_I, INPUT);
-  pinMode(SWITCH_J, INPUT);
-
-  pinMode(SWITCH_E, INPUT);
-  pinMode(SWITCH_F, INPUT);
-  pinMode(SWITCH_G, INPUT);
-  pinMode(SWITCH_H, INPUT);
-
-  pinMode(SWITCH_DOWN, INPUT);
-  pinMode(SWITCH_UP, INPUT);
-
+  for (int i = 0; i < sizeof(switches); i++) {
+    pinMode(switches[i], INPUT);
+    switchState[i] = digitalRead(switches[i]);
+  }
+  
   pinMode(VOLUME_PEDAL, INPUT);
 
   lcd.print("Midi Pedal is");
   lcd.setCursor(0, 1);
-//  Serial.write("EEPROM length is: ", EEPROM.length());
+
+  Serial.println("MIDI Pedal Ready.\n");
+
+  Serial.print("Boot Count: ");
+  Serial.print(boot_count, DEC);
+  Serial.println();
+
+  EEPROM.write(BOOT_COUNT, ++boot_count);
+  //writeMidiMap();
+  readMidiMap();
 }
 
 void checkButton(int switchPin, boolean &switchState) {
   boolean newVal = digitalRead(switchPin);
 
   if (newVal != switchState) {
-    noteOn(153, switchToNote(switchPin), 0x80);
+    sendMidi(midiValues[switchPin]);
     switchState = newVal;
   }
 }
 
 void loop() {
-  checkButton(SWITCH_A, switchA);
-  lcd.setCursor(0, 1);
-  lcd.print(switchA ? "1" : "0");
-  checkButton(SWITCH_B, switchB);
-  lcd.setCursor(1, 1);
-  lcd.print(switchB ? "1" : "0");
-  checkButton(SWITCH_C, switchC);
-  lcd.setCursor(2, 1);
-  lcd.print(switchC ? "1" : "0");
-  checkButton(SWITCH_D, switchD);
-  lcd.setCursor(3, 1);
-  lcd.print(switchD ? "1" : "0");
-
-  checkButton(SWITCH_I, switchI);
-  lcd.setCursor(8, 1);
-  lcd.print(switchI ? "1" : "0");
-  checkButton(SWITCH_J, switchJ);
-  lcd.setCursor(9, 1);
-  lcd.print(switchJ ? "1" : "0");
-
-  checkButton(SWITCH_E, switchE);
-  lcd.setCursor(4, 1);
-  lcd.print(switchE ? "1" : "0");
-  checkButton(SWITCH_F, switchF);
-  lcd.setCursor(5, 1);
-  lcd.print(switchF ? "1" : "0");
-  checkButton(SWITCH_G, switchG);
-  lcd.setCursor(6, 1);
-  lcd.print(switchG ? "1" : "0");
-  checkButton(SWITCH_H, switchH);
-  lcd.setCursor(7, 1);
-  lcd.print(switchH ? "1" : "0");
-
-  checkButton(SWITCH_DOWN, switchDown);
-  lcd.setCursor(8, 1);
-  lcd.print(switchDown ? "1" : "0");
-  checkButton(SWITCH_UP, switchUp);
-  lcd.setCursor(9, 1);
-  lcd.print(switchUp ? "1" : "0");
+  int pin;
+  for(int i = 0; i < sizeof(switches); i++) {
+    checkButton(switches[i], switchState[i]);
+    lcd.setCursor(i, 1);
+    lcd.print(switchState[i] ? "1" : "0");
+  }
 
   readVolume();
 
@@ -160,66 +124,48 @@ void loop() {
   delay(50);
 }
 
-uint8_t switchToNote(int switchPin) {
-  switch(switchPin) {
-    case SWITCH_A:
-      return 0;
-    break;
-
-    case SWITCH_B:
-      return 1;
-    break;
-    
-    case SWITCH_C:
-      return 2;
-    break;
-    
-    case SWITCH_D:
-      return 3;
-    break;
-
-    case SWITCH_E:
-      return 8;
-    break;
-
-    case SWITCH_F:
-      return 9;
-    break;
-
-    case SWITCH_G:
-      return 4;
-    break;
-
-    case SWITCH_H:
-      return 5;
-    break;
-
-    case SWITCH_I:
-      return 6;
-    break;
-
-    case SWITCH_J:
-      return 7;
-    break;
-    
-  }
-}
- 
-void noteOn(uint8_t cmd, uint8_t pitch, uint8_t velocity) {
-  Serial.write(pitch);
+void sendMidi(midi_packet packet) {
+  Serial.write(packet.pitch);
   Serial.write(": ");
-  Serial.write(velocity > 10 ? "On" : "Off");
+  Serial.write(packet.velocity > 10 ? "On" : "Off");
   Serial.write("\n");
-  midiEventPacket_t noteOn;
-  if(cc_mode) {
-    noteOn = {0x0B, 0xB0 | cmd, 0x45, pitch};        
-  } else {
-    noteOn = {0x09, 0x80 | cmd, 0x40 + pitch, velocity};
-  }
-  MidiUSB.sendMIDI(noteOn);
+
+  midiEventPacket_t midi = {packet.cmd, packet.channel, packet.pitch, packet.velocity};
+
+  MidiUSB.sendMIDI(midi);  
 }
 
 void readVolume() {
   uint8_t volume;
   volume = analogRead(VOLUME_PEDAL);
+}
+
+void writeMidiMap() {
+  for(int i = 0; i < sizeof(midiValues) / PACKET_SIZE; i++) {
+    int address = MIDI_MAP_START + (i * sizeof(midi_packet));
+
+    EEPROM.put(address, midiValues[i]);
+  }
+}
+
+void readMidiMap() {
+  for(int i = 0; i < sizeof(midiValues) / PACKET_SIZE; i++) {
+    int address = MIDI_MAP_START + (i * PACKET_SIZE);
+
+    midi_packet data;
+    EEPROM.get(address, data);
+
+    Serial.print("Midi code for ");
+    Serial.print(i, DEC);
+    Serial.print(" is ");
+    Serial.print(data.cmd, DEC);
+    Serial.print(",");
+    Serial.print(data.channel, DEC);
+    Serial.print(",");
+    Serial.print(data.pitch, DEC);
+    Serial.print(",");
+    Serial.print(data.velocity, DEC);
+    Serial.println("");
+  }
+  Serial.println("\n");
 }
