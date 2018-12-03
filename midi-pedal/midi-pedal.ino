@@ -36,8 +36,8 @@
 #define SWITCH_C 8
 #define SWITCH_D 7
 
-#define SWITCH_E 6
-#define SWITCH_F 5
+#define SWITCH_E 5
+#define SWITCH_F 6
 
 #define SWITCH_G 16
 #define SWITCH_H 15
@@ -54,13 +54,13 @@ boolean switchB = false;
 boolean switchC = false;
 boolean switchD = false;
 
-boolean switchI = false;
-boolean switchJ = false;
-
 boolean switchE = false;
 boolean switchF = false;
+
 boolean switchG = false;
 boolean switchH = false;
+boolean switchI = false;
+boolean switchJ = false;
 
 boolean switchDown = false;
 boolean switchUp = false;
@@ -88,13 +88,13 @@ void setup() {
   pinMode(SWITCH_C, INPUT);
   pinMode(SWITCH_D, INPUT);
 
-  pinMode(SWITCH_I, INPUT);
-  pinMode(SWITCH_J, INPUT);
-
   pinMode(SWITCH_E, INPUT);
   pinMode(SWITCH_F, INPUT);
+
   pinMode(SWITCH_G, INPUT);
   pinMode(SWITCH_H, INPUT);
+  pinMode(SWITCH_I, INPUT);
+  pinMode(SWITCH_J, INPUT);
 
   pinMode(SWITCH_DOWN, INPUT);
   pinMode(SWITCH_UP, INPUT);
@@ -115,6 +115,15 @@ void checkButton(int switchPin, boolean &switchState) {
   }
 }
 
+void checkCCButton(int switchPin, boolean &switchState) {
+  boolean newVal = digitalRead(switchPin);
+
+  if (newVal != switchState) {
+    sendMidi({0x0B, 0xB0 | 0x99, switchToNote(switchPin), 0x01});
+    switchState = newVal;
+  }
+}
+
 void loop() {
   checkButton(SWITCH_A, switchA);
   lcd.setCursor(0, 1);
@@ -129,25 +138,25 @@ void loop() {
   lcd.setCursor(3, 1);
   lcd.print(switchD ? "1" : "0");
 
-  checkButton(SWITCH_I, switchI);
-  lcd.setCursor(8, 1);
-  lcd.print(switchI ? "1" : "0");
-  checkButton(SWITCH_J, switchJ);
-  lcd.setCursor(9, 1);
-  lcd.print(switchJ ? "1" : "0");
-
-  checkButton(SWITCH_E, switchE);
+  checkCCButton(SWITCH_E, switchE);
   lcd.setCursor(4, 1);
   lcd.print(switchE ? "1" : "0");
-  checkButton(SWITCH_F, switchF);
+  checkCCButton(SWITCH_F, switchF);
   lcd.setCursor(5, 1);
   lcd.print(switchF ? "1" : "0");
+
   checkButton(SWITCH_G, switchG);
   lcd.setCursor(6, 1);
   lcd.print(switchG ? "1" : "0");
   checkButton(SWITCH_H, switchH);
   lcd.setCursor(7, 1);
   lcd.print(switchH ? "1" : "0");
+  checkButton(SWITCH_I, switchI);
+  lcd.setCursor(8, 1);
+  lcd.print(switchI ? "1" : "0");
+  checkButton(SWITCH_J, switchJ);
+  lcd.setCursor(9, 1);
+  lcd.print(switchJ ? "1" : "0");
 
 //  checkButton(SWITCH_DOWN, switchDown);
 //  lcd.setCursor(8, 1);
@@ -181,11 +190,11 @@ uint8_t switchToNote(int switchPin) {
     break;
 
     case SWITCH_E:
-      return 8;
+      return 0x0D;
     break;
 
     case SWITCH_F:
-      return 9;
+      return 0x0E;
     break;
 
     case SWITCH_G:
