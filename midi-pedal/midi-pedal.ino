@@ -1,4 +1,4 @@
-/*
+  /*
   This has an I2C LCD and a bunch of switches
 
   Wiring
@@ -44,10 +44,10 @@
 #define SWITCH_I 14
 #define SWITCH_J 4
 
-#define SWITCH_DOWN 18
-#define SWITCH_UP   19
+#define SWITCH_DOWN A0
+#define SWITCH_UP   A1
 
-#define VOLUME_PEDAL 20
+#define VOLUME_PEDAL A2
 
 boolean switchA = false;
 boolean switchB = false;
@@ -64,6 +64,8 @@ boolean switchH = false;
 
 boolean switchDown = false;
 boolean switchUp = false;
+
+uint8_t volume = 0;
 
 boolean cc_mode = true;
 
@@ -108,7 +110,7 @@ void checkButton(int switchPin, boolean &switchState) {
   boolean newVal = digitalRead(switchPin);
 
   if (newVal != switchState) {
-    noteOn(153, switchToNote(switchPin), 0x80);
+    sendMidi({0x0B, 0xB0 | 0x99, 0x45, switchToNote(switchPin)});
     switchState = newVal;
   }
 }
@@ -147,17 +149,17 @@ void loop() {
   lcd.setCursor(7, 1);
   lcd.print(switchH ? "1" : "0");
 
-  checkButton(SWITCH_DOWN, switchDown);
-  lcd.setCursor(8, 1);
-  lcd.print(switchDown ? "1" : "0");
-  checkButton(SWITCH_UP, switchUp);
-  lcd.setCursor(9, 1);
-  lcd.print(switchUp ? "1" : "0");
+//  checkButton(SWITCH_DOWN, switchDown);
+//  lcd.setCursor(8, 1);
+//  lcd.print(switchDown ? "1" : "0");
+//  checkButton(SWITCH_UP, switchUp);
+//  lcd.setCursor(9, 1);
+//  lcd.print(switchUp ? "1" : "0");
 
   readVolume();
 
   MidiUSB.flush();
-  delay(50);
+  delay(10);
 }
 
 uint8_t switchToNote(int switchPin) {
@@ -201,25 +203,38 @@ uint8_t switchToNote(int switchPin) {
     case SWITCH_J:
       return 7;
     break;
-    
+
+    case SWITCH_UP:
+      return 8;
+    break;
+
+    case SWITCH_DOWN:
+      return 9;
+    break;
+
   }
 }
- 
-void noteOn(uint8_t cmd, uint8_t pitch, uint8_t velocity) {
-  Serial.write(pitch);
-  Serial.write(": ");
-  Serial.write(velocity > 10 ? "On" : "Off");
+
+void sendMidi(midiEventPacket_t noteOn) {
+  Serial.write(noteOn.header);
+  Serial.write(",");
+  Serial.write(noteOn.byte1);
+  Serial.write(",");
+  Serial.write(noteOn.byte2);
+  Serial.write(",");
+  Serial.write(noteOn.byte3);
   Serial.write("\n");
-  midiEventPacket_t noteOn;
-  if(cc_mode) {
-    noteOn = {0x0B, 0xB0 | cmd, 0x45, pitch};        
-  } else {
-    noteOn = {0x09, 0x80 | cmd, 0x40 + pitch, velocity};
-  }
+
   MidiUSB.sendMIDI(noteOn);
 }
 
 void readVolume() {
-  uint8_t volume;
-  volume = analogRead(VOLUME_PEDAL);
+  uint8_t newVolume;
+  newVolume = map(analogRead(VOLUME_PEDAL) / 4, 245, 35, 0, 127);
+  if(newVolume > volume + 1 || newVolume < volume - 1) {
+    Serial.print("Volume: ");
+    Serial.println(newVolume);
+    volume = newVolume;
+    sendMidi({0x0B, 0xB0 | 0x99, 0x0C, volume});
+  }
 }
