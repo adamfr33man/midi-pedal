@@ -1,17 +1,3 @@
-midi-pedal
-==========
+# MIDI-Pedal
 
-Setup
------
-
-You need to install loopMIDI from here http://www.tobias-erichsen.de/software/loopmidi.html
-
-Create a virtual midi port named 'VirtualMidi1'
-
-Update the index.js to use your comport and virtual midi name
-
-```
-node index
-```
-
-Use ableton
+This was initally setup as a simple controller for Helix Native. With 10 buttons it can change snapshots and has one expression pedal which is usable in HX Native.
